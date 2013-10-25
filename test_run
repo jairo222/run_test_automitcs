@@ -2,75 +2,46 @@
 
 PATH_TEST=service/tests/
 RUN_TEST="-m unittest discover"
-clave='service'
+path=$PWD
 
-esta_service()
-{
-#acumulamos el path
-path=$1/$2
-# filtrabos si esta service
-variable=`ls $path |grep service`
+vacio=`locate $PWD/*/tests | grep $1$`
+echo "$PWD/*/tests"
+echo $vacio
 
-#si variable es vacia
-if test -z  $variable;
+encontro=false
+for path in  `locate $PWD/*/tests | grep $1$`;
+do
+	encontro=true
+	python $RUN_TEST  $path 
+	echo "ejecutando--> python" $RUN_TEST $path
+done
+
+if test !$encontro;
 then
-	#si no es el directorio service recorro el listado 
-	for l in `ls $path`
-		do
-			#si es un directorio, me meto adentro
-			if test -d $l;
-			then
-				#llama a la funcion recursivamente
-				esta_service $path $l
-				result=$?
-				if [ $result ];
-				  then echo 'el result es true' $path/$l $result
-
-					echo $path
-					eval "$1=$result"
-					break
-				else
-				  return false
-				fi
-			fi
-		done
-
-	
-	
-else
-	#como no puedo retornar valor numerico, modifico el parametro
-	eval "$1=$path"
-	return 0
-	
-fi
-}	
-
-#filtro para ver si en el path esta service
-variable=${PWD%*/service/*}
-variable2=${PWD%*/service}
-
-if test $variable = $PWD && $variable2 = $PWD; # si es igual entonces no esta el service
-then
-	path=$PWD
-	esta_service $path
-
-	if test -d $path;
-	then
-
-		python $RUN_TEST $path/service/tests/$1
-		echo "se ejecuto de la siguiente path: " $path/service/tests/$1
-
-	fi 
-		
-else #si no son iguales entonces en variable tengo el valor recortado hasta donde esta service
-	if test $variable = $PWD; 	
-	then	
-		python $RUN_TEST $variable2/$PATH_TEST$1 #ejecuto python con la ruta ya encontrada
-		echo 'ejecutando python  ' $RUN_TEST $variable2/$PATH_TEST$1 
+	variable=${PWD%*/service/*}
+	variable2=${PWD%*/service}
+	if test "$variable" = "$PWD" -a "$variable2" = "$PWD";
+	then 
+		echo "no se encontro el directorio"
 	else
-		python $RUN_TEST $variable/$PATH_TEST$1 #ejecuto python con la ruta ya encontrada
-		echo 'ejecutando python  ' $RUN_TEST $variable/$PATH_TEST$1 
+		if test $variable = $PWD; 	
+		then	
+			for path in  `locate $variable2/*/tests | grep $1$`;
+			do
+				encontro=true
+				python $RUN_TEST  $path 
+				echo "ejecutando--> python" $RUN_TEST $path
+			done
+
+			
+		else
+			for path in  `locate $variable/*/tests | grep $1$`;
+			do
+				encontro=true
+				python $RUN_TEST  $path 
+				echo "ejecutando--> python" $RUN_TEST $path
+			done
+		fi
 	fi
 fi
-
-
+	
